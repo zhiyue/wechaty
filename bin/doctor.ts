@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- *   Wechaty - https://github.com/chatie/wechaty
+ *   Wechaty - https://github.com/wechaty/wechaty
  *
- *   Copyright 2016-2017 Huan LI <zixia@zixia.net>
+ *   @copyright 2016-2018 Huan LI <zixia@zixia.net>
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
  *
  */
 
-import * as os from 'os'
+import os from 'os'
 
 import { config }   from '../src/config'
 import { Doctor }   from '../src/doctor'
@@ -27,33 +27,28 @@ import { Wechaty }  from '../src/wechaty'
 const wechaty = Wechaty.instance()
 const doctor = new Doctor()
 
-async function main() {
+async function main () {
   let ipcTestResult: string
-  const chromedriverVersion = doctor.chromedriverVersion()
   try {
     await doctor.testTcp()
     ipcTestResult = 'PASS'
   } catch (err) {
-    console.log(err)
+    console.info(err)
     ipcTestResult = 'FAIL. Please check your tcp network, Wechaty need to listen on localhost and connect to it.'
   }
 
-  console.log(`
+  console.info(`
   #### Wechaty Doctor
 
   1. Wechaty version: ${wechaty.version()}
   2. ${os.type()} ${os.arch()} version ${os.release()} memory ${Math.floor(os.freemem() / 1024 / 1024)}/${Math.floor(os.totalmem() / 1024 / 1024)} MB
-  3. Docker: ${config.dockerMode}
+  3. Docker: ${config.docker}
   4. Node version: ${process.version}
   5. Tcp IPC TEST: ${ipcTestResult}
-  6. Chromedriver: ${chromedriverVersion}
 
   `)
 
 }
 
-try {
-  main()
-} catch (err) {
-  console.error('main() exception: %s', err.message || err)
-}
+main()
+  .catch(err => console.error('main() exception: %s', err))

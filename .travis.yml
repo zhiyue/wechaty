@@ -1,58 +1,65 @@
-sudo: required
-dist: trusty
 language: node_js
-
 node_js:
-  - "7"
-  - "8"
+  - "10"
 
 os:
   - linux
   - osx
 
 addons:
-  chrome: stable
   apt:
     packages:
       - jq
       - shellcheck
-      - xvfb
+      - moreutils
 
 cache:
   directories:
     - node_modules
 
-before_install:
-  - npm config set progress=false
+stages:
+  - test
+  - pack
+  - name: deploy
+    if: (type = push) AND branch =~ ^(master|v\d+\.\d+)$
 
 install:
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then brew update; brew cleanup; brew cask cleanup; fi
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then brew uninstall --force brew-cask; brew update; fi
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then brew cask install --force google-chrome; fi
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then brew install shellcheck; fi
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then brew install jq; fi
-
-  - if [ "$TRAVIS_OS_NAME" == 'linux' ]; then export DISPLAY=':99.0'; fi
-  - if [ "$TRAVIS_OS_NAME" == 'linux' ]; then sh -e /etc/init.d/xvfb start; fi
-
-  # - if [ "$TRAVIS_OS_NAME" == 'linux' ]; then wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb; fi
-  # - if [ "$TRAVIS_OS_NAME" == 'linux' ]; then sudo dpkg -i google-chrome*.deb; fi
-  # - if [ "$TRAVIS_OS_NAME" == 'linux' ]; then sudo apt-get install jq; fi
-
-  - npm install phantomjs-prebuilt
-  - npm --progress false --loglevel warn install
+  - npm install
 
 script:
-  - echo $TRAVIS_OS_NAME
   - node --version
   - npm --version
-  - shellcheck bin/*.sh
-  - npm run lint
-  - npm run dist
-  # - if [ "$TRAVIS_OS_NAME" == 'linux' ];  then WECHATY_LOG=silly    npm run test:phantomjs;   fi
-  - if [ "$TRAVIS_OS_NAME" == 'linux' ];  then WECHATY_LOG=silly    npm run test:chrome;      fi
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ];    then WECHATY_LOG=verbose  npm run nycava;           fi
-  - npm run test:npm && echo 'Npm packing test is passed'
+  - echo "Testing Started ..."
+  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then npm run test:mac; else npm run test; fi
+  - echo "Testing Finished"
+
+jobs:
+  include:
+
+    - stage: pack
+      script:
+        - echo "NPM Pack Testing Started ..."
+        - npm version
+        - ./scripts/generate-version.sh
+        - npm run test:pack
+        - echo "NPM Pack Testing Finished."
+
+    - stage: deploy
+      script:
+        - echo "NPM Deploying Started ..."
+        - npm version
+        - ./scripts/generate-version.sh
+        - ./scripts/package-publish-config-tag.sh
+        - npm run dist
+        - echo "NPM Building Finished."
+
+      deploy:
+        provider: npm
+        email: zixia@zixia.net
+        api_key: "$NPM_TOKEN"
+        skip_cleanup: true
+        on:
+          all_branches: true
 
 notifications:
   webhooks:
@@ -64,16 +71,3 @@ notifications:
   email:
     on_success: change
     on_failure: change
-
-after_success:
-  - if [ "$TRAVIS_OS_NAME" == 'osx' ]; then npm run coverage; fi
-
-before_deploy:
-  - npm version
-  - npm run dist
-
-deploy:
-  provider: npm
-  email: zixia@zixia.net
-  api_key: "$NPM_TOKEN"
-  skip_cleanup: true

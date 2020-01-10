@@ -58,10 +58,20 @@ yarn.lock
 .v8flags.*
 
 # why? forgot... 2017-05-18 by zixia
-/test/fixture/docker/package.json
+/tests/fixtures/docker/package.json
 
 tags
+*.memory-card.json
 *.wechaty.json
 /package
 /wechaty-*.*.*.tgz
 *.bak
+package-lock.json
+.babel.json
+
+.idea
+examples/.config
+examples/.pki
+.config/
+log
+/*.jpg

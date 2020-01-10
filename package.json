@@ -1,58 +1,54 @@
 {
   "name": "wechaty",
-  "version": "0.8.147",
-  "description": "Wechat for Bot(Personal Account)",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "version": "0.29.34",
+  "description": "Wechaty is a Bot SDK for Wechat Personal Account",
+  "main": "dist/src/index.js",
+  "typings": "dist/src/index.d.ts",
   "wechaty": {
-    "DEFAULT_HEAD": "chrome",
-    "DEFAULT_PUPPET": "web",
-    "DEFAULT_PROFILE": "demo",
-    "DEFAULT_PORT": 8788,
+    "DEFAULT_HEAD": 0,
+    "DEFAULT_PORT": 8080,
     "DEFAULT_PROTOCOL": "io|0.0.1",
     "DEFAULT_TOKEN": "WECHATY_IO_TOKEN",
-    "DEFAULT_APIHOST": "api.chatie.io",
-    "CMD_CHROMIUM": "/wechaty/bin/xvfb-chromium"
+    "DEFAULT_APIHOST": "api.chatie.io"
   },
   "scripts": {
-    "ava": "ava --verbose --extension ts",
-    "ts-node": "ts-node",
-    "dist": "npm run clean && tsc && jq \"del (.files)\" < package.json > dist/package.json && shx cp src/puppet-web/*.js dist/src/puppet-web/",
-    "doc": "npm run dist && jsdoc2md dist/src/{wechaty,room,contact,friend-request,message}.js > docs/index.md",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "changelog": "github_changelog_generator -u chatie -p wechaty && sed -i'.bak' /greenkeeper/d CHANGELOG.md",
-    "doctor": "npm run check-node-version && ts-node bin/doctor",
+    "build": "tsc",
     "clean": "shx rm -fr dist/*",
-    "check-node-version": "check-node-version --node \">= 6.9\"",
-    "lint": "npm run clean && npm run check-node-version && npm run eslint && npm run tslint",
-    "nycava": "WECHATY_HEAD=chrome nyc ava --serial --fail-fast --verbose --timeout=5m \"dist/{src,test}/**/*.spec.js\"",
-    "eslint": "eslint \"{bin,example,src,test}/**/*.js\" --ignore-pattern=\"test/fixture/**\"",
-    "tslint": "tslint --version && tslint --project tsconfig.json --type-check \"{bin,example,src,test}/**/*.ts\" --exclude=\"test/fixture/**\" --exclude=\"dist/\" && npm run clean && tsc --noEmit",
-    "shlint": "bash -n bin/*.sh",
-    "pretest": "npm run clean && npm run lint && npm run dist",
-    "sloc": "sloc bin example src test index.ts --details --format cli-table --keys total,source,comment && sloc bin example src test index.ts",
-    "test": "npm run test:chrome",
-    "posttest": "npm run clean && npm run sloc",
-    "test:phantomjs": "cross-env LC_ALL=C WECHATY_HEAD=phantomjs ava --verbose --fail-fast --serial --timeout=5m \"dist/{src,test}/**/*.spec.js\"",
-    "test:chrome": "cross-env LC_ALL=C WECHATY_HEAD=chrome ava --serial --fail-fast --verbose --timeout=5m \"dist/{src,test}/**/*.spec.js\"",
-    "test:bug": "cross-env LC_ALL=C WECHATY_HEAD=chrome WECHATY_LOG=silly ava --serial --fail-fast --verbose --timeout=5m \"dist/src/message.spec.js\"",
-    "test:chrome:fast": "cross-env LC_ALL=C WECHATY_HEAD=chrome ava --concurrency 5 --fail-fast --timeout=5m \"dist/{src,test}/**/*.spec.js\"",
-    "testdev": "cross-env LC_ALL=C WECHATY_LOG=silly ava --ext ts --serial --verbose --fail-fast --timeout=2m",
-    "testdist": "cross-env WECHATY_LOG=SILLY WECHATY_HEAD=chrome ava --ext ts --verbose --fail-fast --timeout=2m",
-    "test:pack": "npm run dist && rm -fr package wechaty-*.*.*.tgz && npm pack --verbose  && tar zxvf wechaty-*.*.*.tgz",
-    "test:npm": "export TMPDIR=/tmp/wechaty.$$ && npm pack && mkdir $TMPDIR && mv wechaty-*.*.*.tgz $TMPDIR && cp test/fixture/smoke-testing.js $TMPDIR && cd $TMPDIR && npm init -y && npm i wechaty-*.*.*.tgz && node smoke-testing.js",
+    "dist": "npm run clean && npm run build",
+    "pack": "npm pack",
+    "docs": "bash -x scripts/generate-docs.sh",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "changelog": "github_changelog_generator -u chatie -p wechaty && sed -i'.bak' /greenkeeper/d CHANGELOG.md && sed -i'.bak' '/An in-range update of/d' CHANGELOG.md && ts-node scripts/sort-contributiveness.ts < CHANGELOG.md > CHANGELOG.new.md 2>/dev/null && cat CHANGELOG.md >> CHANGELOG.new.md && mv CHANGELOG.new.md CHANGELOG.md",
+    "doctor": "npm run check-node-version && ts-node bin/doctor",
+    "check-node-version": "check-node-version --node \">= 10\"",
+    "lint": "npm run check-node-version && npm run lint:es && npm run lint:ts && npm run lint:sh && npm run lint:md",
+    "lint:es": "eslint --ignore-pattern node_modules/ --ignore-pattern fixtures/ '{bin,examples,src,scripts,tests}/**/*.ts'",
+    "lint:md": "markdownlint README.md",
+    "lint:ts": "tsc --noEmit",
+    "lint:sh": "bash -n bin/*.sh",
+    "puppet-install": "ts-node bin/puppet-install.ts",
+    "sloc": "sloc bin examples scripts src tests --details --format cli-table --keys total,source,comment && sloc bin examples scripts src tests",
+    "ts-node": "ts-node",
+    "test": "npm run lint && npm run test:unit && npm run test:shell && npm run sloc",
+    "test:mac": "npm run test:unit",
+    "test:pack": "bash -x scripts/npm-pack-testing.sh",
+    "test:shell": "shellcheck bin/*.sh",
+    "test:unit": "blue-tape -r ts-node/register \"src/**/*.spec.ts\" \"src/*.spec.ts\" \"tests/*.spec.ts\" \"tests/**/*.spec.ts\"",
+    "test:debug": "blue-tape -r ts-node/register src/puppet-web/bridge.spec.ts",
+    "typedoc": "bash scripts/typedoc.sh",
     "io-client": "ts-node bin/io-client",
-    "dev": "ts-node dev.ts",
-    "demo": "ts-node example/ding-dong-bot.ts",
-    "start": "npm run demo"
+    "demo": "ts-node examples/ding-dong-bot.ts",
+    "start": "npm run demo",
+    "postinstall": "opencollective-postinstall"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chatie/wechaty.git"
+    "url": "git+https://github.com/wechaty/wechaty.git"
   },
   "bin": {
-    "wechaty-io-client": "dist/bin/io-client.js",
     "wechaty-doctor": "dist/bin/doctor.js",
+    "wechaty-io-client": "dist/bin/io-client.js",
+    "wechaty-puppet-install": "dist/bin/puppet-install.js",
     "wechaty-version": "dist/bin/version.js"
   },
   "keywords": [
@@ -64,6 +60,7 @@
     "robot",
     "chatbot",
     "framework",
+    "sdk",
     "wechaty",
     "chatie",
     "微信控"
@@ -71,95 +68,87 @@
   "author": {
     "name": "Huan LI",
     "email": "zixia@zixia.net",
-    "url": "www.zixia.net"
+    "url": "https://www.zixia.net"
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/chatie/wechaty/issues"
+    "url": "https://github.com/wechaty/wechaty/issues"
   },
-  "homepage": "https://github.com/chatie/wechaty#readme",
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "node": true,
-      "es6": true
-    },
-    "plugins": [
-      "ava"
-    ],
-    "parser": "babel-eslint",
-    "parserOptions": {
-      "ecmaVersion": 7,
-      "sourceType": "module",
-      "ecmaFeatures": {
-        "impliedStrict": true
-      },
-      "extends": "plugin:ava/recommended"
-    }
-  },
-  "ava": {
-    "require": [
-      "ts-node/register"
-    ]
-  },
+  "homepage": "https://chatie.io/wechaty/",
   "engines": {
-    "node": ">= 6.9.0"
+    "node": ">= 10"
   },
   "dependencies": {
-    "@types/express": "4.0.36",
-    "@types/node": "8.0.23",
-    "@types/socket.io": "1.4.29",
-    "bl": "1.2.1",
-    "body-parser": "1.17.2",
-    "brolog": "1.1.32",
-    "chromedriver": "2.31.0",
-    "express": "4.15.2",
-    "phantomjs-prebuilt": "2.1.14",
-    "ps-tree": "1.1.0",
-    "raven": "2.1.2",
-    "request": "2.81.0",
-    "retry-promise": "1.0.0",
-    "selenium-webdriver": "3.5.0",
-    "socket.io": "1.7.4",
-    "state-switch": "0.1.13",
-    "ws": "3.1.0"
+    "@types/qrcode": "^1.3.4",
+    "brolog": "^1.8.1",
+    "clone-class": "^0.6.11",
+    "cuid": "^2.1.1",
+    "file-box": "^0.8.23",
+    "hot-import": "^0.2.1",
+    "in-gfw": "^1.2.0",
+    "memory-card": "^0.6.9",
+    "npm-programmatic": "0.0.12",
+    "open-graph": "^0.2.4",
+    "opencollective": "^1.0.3",
+    "opencollective-postinstall": "^2.0.2",
+    "pkg-dir": "^4.0.0",
+    "portfinder": "^1.0.17",
+    "promise-retry": "^1.1.1",
+    "qr-image": "^3.2.0",
+    "qrcode": "^1.4.4",
+    "raven": "^2.6.2",
+    "read-pkg-up": "^7.0.0",
+    "state-switch": "^0.6.2",
+    "watchdog": "^0.8.1",
+    "wechaty-puppet": "^0.17.5",
+    "ws": "^7.0.0"
   },
   "devDependencies": {
-    "@types/body-parser": "1.16.4",
-    "@types/fluent-ffmpeg": "2.1.1",
-    "@types/glob": "5.0.30",
-    "@types/mime": "1.3.1",
-    "@types/raven": "2.1.2",
-    "@types/request": "2.0.1",
-    "@types/selenium-webdriver": "3.0.4",
-    "@types/sinon": "2.3.3",
-    "@types/ws": "3.0.2",
-    "apiai": "4.0.3",
-    "ava": "0.22.0",
-    "babel-cli": "6.26.0",
-    "babel-eslint": "7.2.3",
-    "babel-preset-es2015": "6.24.1",
-    "check-node-version": "2.1.0",
-    "cookie-parser": "1.4.3",
-    "coveralls": "2.13.1",
-    "cross-env": "5.0.5",
-    "eslint": "4.4.1",
-    "eslint-plugin-ava": "4.2.1",
-    "finis": "0.0.2",
-    "fluent-ffmpeg": "2.1.2",
-    "glob": "7.1.2",
-    "jsdoc-to-markdown": "3.0.0",
-    "nyc": "11.1.0",
-    "qrcode-terminal": "0.11.0",
-    "shx": "0.2.2",
-    "sinon": "3.2.0",
-    "sloc": "0.2.0",
-    "ts-node": "3.3.0",
-    "tslint": "5.3.2",
-    "tslint-jsdoc-rules": "0.1.2",
-    "tuling123-client": "0.0.1",
-    "typescript": "2.4.2",
-    "yarn": "0.28.4"
+    "@babel/core": "^7.0.1",
+    "@babel/node": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@chatie/eslint-config": "^0.8.1",
+    "@chatie/git-scripts": "^0.2.3",
+    "@chatie/semver": "^0.4.7",
+    "@chatie/tsconfig": "^0.6.1",
+    "@types/blessed": "^0.1.10",
+    "@types/cuid": "^1.3.0",
+    "@types/fluent-ffmpeg": "^2.1.0",
+    "@types/fs-extra": "^8.0.0",
+    "@types/glob": "^5.0.0p",
+    "@types/mime": "^2.0.0",
+    "@types/node": "^12.12.3",
+    "@types/open-graph": "^0.2.0",
+    "@types/promise-retry": "^1.1.3",
+    "@types/qr-image": "^3.2.1",
+    "@types/raven": "^2.1.0",
+    "@types/request": "^2.47.1",
+    "@types/retry": "^0.12.0",
+    "@types/sinon": "^7.0.4",
+    "@types/ws": "^6.0.0",
+    "apiai": "^4.0.0",
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.8.5",
+    "check-node-version": "^4.0.1",
+    "coveralls": "^3.0.0",
+    "cross-env": "^6.0.0",
+    "finis": "^0.4.1",
+    "fluent-ffmpeg": "^2.1.0",
+    "gl-matrix": "^3.0.0",
+    "glob": "^7.1.0",
+    "is-pr": "^1.0.0",
+    "jsdoc-to-markdown": "^5.0.0",
+    "markdownlint-cli": "^0.19.0",
+    "nyc": "^14.0.0",
+    "pkg-jq": "^0.2.2",
+    "qrcode-terminal": "^0.12.0",
+    "request": "^2.87.0",
+    "shx": "^0.3.0",
+    "sinon": "^7.2.3",
+    "sloc": "^0.2.0",
+    "tstest": "^0.4.1",
+    "typedoc": "^0.15.0",
+    "wechaty-puppet-mock": "^0.16.1"
   },
   "files_comment__whitelist_npm_publish": "http://stackoverflow.com/a/8617868/1123955",
   "files": [
@@ -174,7 +163,16 @@
     "src"
   ],
   "publishConfig": {
-    "tagBak": "next",
-    "tag": "latest"
+    "access": "public",
+    "tag": "next"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/wechaty"
+  },
+  "git": {
+    "scripts": {
+      "pre-push": "npx git-scripts-pre-push"
+    }
   }
 }

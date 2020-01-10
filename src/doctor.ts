@@ -1,7 +1,7 @@
 /**
- *   Wechaty - https://github.com/chatie/wechaty
+ *   Wechaty - https://github.com/wechaty/wechaty
  *
- *   Copyright 2016-2017 Huan LI <zixia@zixia.net>
+ *   @copyright 2016-2018 Huan LI <zixia@zixia.net>
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -26,15 +26,16 @@ import {
 }                   from './config'
 
 export class Doctor {
-  constructor() {
+
+  constructor () {
     log.verbose('Doctor', 'constructor()')
   }
 
-  public chromedriverVersion(): string {
-    const spawn = require( 'child_process' ).spawnSync
+  public chromedriverVersion (): string {
+    const spawn = require('child_process').spawnSync
     let version: string
     try {
-      const cmd = spawn( 'chromedriver', [ '--version' ] )
+      const cmd = spawn('chromedriver', [ '--version' ])
       version = cmd.error || cmd.stdout.toString() || cmd.stderr.toString()
     } catch (e) {
       version = e.message
@@ -45,7 +46,7 @@ export class Doctor {
   /**
    * https://gist.github.com/tedmiston/5935757
    */
-  public testTcp(): Promise<boolean> {
+  public testTcp (): Promise<boolean> {
     log.verbose('Doctor', 'testTcp()')
 
     return new Promise<boolean>(async (resolve, reject) => {
@@ -69,7 +70,7 @@ export class Doctor {
           client.write('ding')
         })
 
-        client.on('data', function(data) {
+        client.on('data', () => {
           /**
            * Promise Resolve
            */
@@ -82,10 +83,9 @@ export class Doctor {
          */
         client.on('error', reject)
 
-        client.on('close', err => server.close())
+        client.on('close', () => server.close())
       })
     })
   }
-}
 
-export default Doctor
+}
